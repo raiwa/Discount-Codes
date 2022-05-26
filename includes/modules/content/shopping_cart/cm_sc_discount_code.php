@@ -3,7 +3,7 @@
   $Id: cm_sc_discount_code.php
   $Loc: catalog/includes/modules/content/shopping_cart/
 
-  Discount Code 5.7.0 Phoenix
+  Discount Code 5.7.1 Phoenix 1.0.8.6
   by @raiwa
   info@oscaddons.com
   www.oscaddons.com

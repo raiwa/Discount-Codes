@@ -2,7 +2,7 @@
 /*
   $Id$
 
-  Discount Code 5.7.0 Phoenix
+  Discount Code 5.7.1 Phoenix 1.0.8.6
   by @raiwa
   info@oscaddons.com
   www.oscaddons.com
