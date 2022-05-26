@@ -2,7 +2,7 @@
 /*
   $Id$
 
-  Discount Code 5.7.0. Phoenix
+  Discount Code 5.7.1. Phoenix Pro 1.0.8.6
   by @raiwa
   info@oscaddons.com
   www.oscaddons.com
@@ -19,7 +19,7 @@
 */
 
   class ot_discount extends abstract_module {
-    var $version = '5.7.0.';
+    var $version = '5.7.1.-1.0.8.6';
 
     const CONFIG_KEY_BASE = 'MODULE_ORDER_TOTAL_DISCOUNT_';
 
@@ -213,10 +213,10 @@ EOSQL
                   for ($i = 0, $n = count($order->products); $i < $n; $i++) {
                     if (in_array(Product::build_prid($order->products[$i]['id']), $products)) {
                       if ($k >= $order->products[$i]['qty']) {
-                        $products_discount = $this->format_raw(strpos($check['discount_values'], '%') === false ? $check['discount_values'] * $order->products[$i]['qty'] : Tax::price($order->products[$i]['final_price'], $order->products[$i]['tax']) * str_replace('%', '', $check['discount_values']) / 100 * $order->products[$i]['qty']);
+                        $products_discount = $currencies->format_raw(strpos($check['discount_values'], '%') === false ? $check['discount_values'] * $order->products[$i]['qty'] : Tax::price($order->products[$i]['final_price'], $order->products[$i]['tax']) * str_replace('%', '', $check['discount_values']) / 100 * $order->products[$i]['qty']);
                         $k -= $order->products[$i]['qty'];
                       } else {
-                        $products_discount = $this->format_raw(strpos($check['discount_values'], '%') === false ? $check['discount_values'] * $k : Tax::price($order->products[$i]['final_price'], $order->products[$i]['tax']) * str_replace('%', '', $check['discount_values']) / 100 * $k);
+                        $products_discount = $currencies->format_raw(strpos($check['discount_values'], '%') === false ? $check['discount_values'] * $k : Tax::price($order->products[$i]['final_price'], $order->products[$i]['tax']) * str_replace('%', '', $check['discount_values']) / 100 * $k);
                         $k = 0;
                       }
 
