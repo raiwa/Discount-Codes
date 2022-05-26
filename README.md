@@ -1,6 +1,6 @@
-# Discount Codes 5.7.0. Phoenix (full installation package)
+# Discount Codes 5.7.1. Phoenix Pro 1.0.8.6 (full installation package)
 
-Discount Codes 5.7.0. Addon for Phoenix Cart v1.0.8.6.+
+Discount Codes 5.7.1. Addon for Phoenix Cart v1.0.8.6.+
 by @raiwa
 info@oscaddons.com
 www.oscaddons.com
