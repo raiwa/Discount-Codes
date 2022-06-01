@@ -37,14 +37,15 @@
     if ($dInfo->number_of_use != 0) $contents[] = ['text' => TABLE_HEADING_NUMBER_OF_USE . ' ' . $dInfo->number_of_use];
     if ($dInfo->number_of_products != 0) $contents[] = ['text' => TABLE_HEADING_NUMBER_OF_PRODUCTS . ' ' . $dInfo->number_of_products];
     if (!empty($dInfo->customers_id)) {
+      $customers_mail = implode('\',\'', explode(',', $dInfo->customers_id));
       $select_string = '';
       $customers_query = $GLOBALS['db']->query(sprintf(<<<'EOSQL'
 SELECT CONCAT(customers_lastname, ', ', customers_firstname, ' (', customers_email_address, ')') AS customers_info
   FROM customers
-  WHERE customers_email_address IN (%s)
+  WHERE customers_email_address IN ('%s')
 ORDER BY customers_lastname, customers_firstname
 EOSQL
-      , (int)$dInfo->customers_id));
+      , $customers_mail));
 
       while ( $customers = $customers_query->fetch_assoc() ) {
         $select_string .= (empty($select_string) ? '' : '<br>') . $customers['customers_info'];

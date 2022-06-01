@@ -50,21 +50,21 @@
 
       if (isset($_SESSION['sess_discount_code'])) {
         $check_query = $db->query(sprintf(<<<'EOSQL'
-SELECT count(*) AS total, dc.number_of_use
-  FROM discount_codes dc, customers_to_discount_codes c2dc
-  WHERE dc.discount_codes_id = c2dc.discount_codes_id
-    AND dc.discount_codes = '%s'
-    AND c2dc.customers_id = %s
-  GROUP BY c2dc.customers_id
+SELECT count(*) AS total, number_of_use
+  FROM discount_codes
+  WHERE discount_codes = '%s'
+    AND customers_id = '%s'
   LIMIT 1
 EOSQL
-        , $_SESSION['sess_discount_code'], (int)$customer_id));
+        , $_SESSION['sess_discount_code'], $GLOBALS['customer']->get('customers_email_address')));
+
 
         if (mysqli_num_rows($check_query) == 0) {
           $check['number_of_use'] = 0;
         } else {
           $check = $check_query->fetch_assoc();
         }
+
         if (($check['number_of_use'] == 0 ? 1 : ($check['total'] < $check['number_of_use'] ? 1 : 0)) == 1) {
           $check_query = $db->query(sprintf(<<<'EOSQL'
 SELECT *
@@ -99,7 +99,7 @@ EOSQL
               $newsletter = $check_news['customers_newsletter'];
             }
 
-            if (!empty($check['order_number'])) {
+            if (!Text::is_empty($check['order_number'])) {
             	$check_query_order = $db->query(sprintf(<<<'EOSQL'
 SELECT count(*) AS orders
   FROM orders
@@ -110,14 +110,9 @@ EOSQL
             	$check_order = $check_query_order->fetch_assoc();
             	$orders = $check_order['orders']+1;
             	// Support for PWA guest orders BEGIN
-            	if ( mysqli_num_rows($db->query(sprintf(<<<'EOSQL'
-SELECT *
-  FROM information_schema.columns
-  WHERE table_schema = '%s'
-    AND table_name='orders'
-    AND column_name like 'customers_guest'
-EOSQL
-                , DB_DATABASE)) == 1) ) {
+              $guest_check = $db->query("SHOW COLUMNS FROM orders LIKE 'customers_guest'");
+              $exists = (mysqli_num_rows($guest_check))?TRUE:FALSE;
+              if ($exists) {
             	  $check_query_mail = $db->query(sprintf(<<<'EOSQL'
 SELECT customers_email_address
   FROM customers
@@ -151,7 +146,7 @@ EOSQL
             }
 
             if ( (empty($check['newsletter']) || $newsletter == 1) && (empty($check['order_number']) || $orders == $check['order_number']) ) {
-              if ( in_array($customer_id, $customers) && !empty($_SESSION['shipping']) ) {
+              if ( in_array($GLOBALS['customer']->get('customers_email_address'), $customers) && !empty($_SESSION['shipping']) ) {
                 if (!empty($check['products_id']) || !empty($check['categories_id']) || !empty($check['manufacturers_id']) || (int)$check['exclude_specials'] == 1) {
 
                   $products = [];
@@ -428,14 +423,6 @@ EOSQL
 
       // CREATE NEEDED TABLES INTO DB
       $db->query("
-        CREATE TABLE IF NOT EXISTS customers_to_discount_codes (
-          customers_id int(11) NOT NULL default '0',
-          discount_codes_id int(11) NOT NULL default '0',
-          KEY customers_id (customers_id),
-          KEY discount_codes_id (discount_codes_id)
-          ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci AUTO_INCREMENT=1 ;
-        ");
-      $db->query("
         CREATE TABLE IF NOT EXISTS discount_codes (
           discount_codes_id int(11) NOT NULL auto_increment,
           discount_description VARCHAR(128) NULL,
@@ -459,6 +446,10 @@ EOSQL
           PRIMARY KEY  (discount_codes_id)
           ) DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci AUTO_INCREMENT=1 ;
         ");
+        
+      // remove obsolete table
+      $db->query("DROP TABLE IF EXISTS customers_to_discount_codes");
+
       // check if new field exist if not create
       $check = $db->query("SHOW COLUMNS FROM discount_codes LIKE 'shipping'");
       $exists = (mysqli_num_rows($check))?TRUE:FALSE;
@@ -501,7 +492,7 @@ EOSQL
       global $db;
 
       if ( defined('MODULE_ORDER_TOTAL_DISCOUNT_DELETE_TABLES') && MODULE_ORDER_TOTAL_DISCOUNT_DELETE_TABLES == 'True' ) {
-	      $db->query("DROP TABLE IF EXISTS customers_to_discount_codes");
+        $db->query("DROP TABLE IF EXISTS customers_to_discount_codes");
         $db->query("DROP TABLE IF EXISTS discount_codes");
         $db->query("ALTER TABLE orders DROP discount_codes");
       }
