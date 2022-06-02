@@ -1,6 +1,6 @@
 <?php
 /*
-  Discount Code 5.7.1 Phoenix 1.0.8.6
+  Discount Code 5.7.3 Phoenix 1.0.8.6
   by @raiwa
   info@oscaddons.com
   www.oscaddons.com
@@ -138,7 +138,6 @@ EOSQL
       , $GLOBALS['order']->info['discount_codes']));
 
       $discount_codes = $discount_codes_query->fetch_assoc();
-      $GLOBALS['db']->perform('customers_to_discount_codes', ['customers_id' => $GLOBALS['customer_data']->get('id', $GLOBALS['order']->customer), 'discount_codes_id' => (int)$discount_codes['discount_codes_id']]);
       $GLOBALS['db']->query(sprintf(<<<'EOSQL'
 UPDATE discount_codes
   SET number_of_orders = number_of_orders + 1

@@ -2,7 +2,7 @@
 /*
   $Id$
 
-  Discount Code 5.7.0 Phoenix
+  Discount Code 5.7.3 Phoenix
   by @raiwa
   info@oscaddons.com
   www.oscaddons.com
@@ -17,13 +17,6 @@
 
   Released under the GNU General Public License
 */
-  $db->query(sprintf(<<<'EOSQL'
-DELETE
-  FROM customers_to_discount_codes
-  WHERE discount_codes_id = %s
-EOSQL
-  , (int)$_GET['dID']));
-
   $db->query(sprintf(<<<'EOSQL'
 DELETE
   FROM discount_codes
