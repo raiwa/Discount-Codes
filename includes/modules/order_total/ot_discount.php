@@ -2,7 +2,7 @@
 /*
   $Id$
 
-  Discount Code 5.7.1. Phoenix Pro 1.0.8.6
+  Discount Code 5.7.4. Phoenix Pro 1.0.8.6
   by @raiwa
   info@oscaddons.com
   www.oscaddons.com
@@ -19,7 +19,7 @@
 */
 
   class ot_discount extends abstract_module {
-    var $version = '5.7.1.-1.0.8.6';
+    var $version = '5.7.4.-1.0.8.6';
 
     const CONFIG_KEY_BASE = 'MODULE_ORDER_TOTAL_DISCOUNT_';
 
@@ -106,12 +106,12 @@ SELECT count(*) AS orders
   WHERE customers_id = %s
 EOSQL
         , (int)$customer_id));
-
+        
             	$check_order = $check_query_order->fetch_assoc();
             	$orders = $check_order['orders']+1;
             	// Support for PWA guest orders BEGIN
               $guest_check = $db->query("SHOW COLUMNS FROM orders LIKE 'customers_guest'");
-              $exists = (mysqli_num_rows($guest_check))?TRUE:FALSE;
+              $exists = (mysqli_num_rows($guest_check))? true : false;
               if ($exists) {
             	  $check_query_mail = $db->query(sprintf(<<<'EOSQL'
 SELECT customers_email_address
@@ -125,8 +125,8 @@ EOSQL
             	    $check_query_order_guest = $db->query(sprintf(<<<'EOSQL'
 SELECT count(*) AS orders
   FROM orders
-  WHERE customers_email_address = %s
-    AND customers_guest = '1');
+  WHERE customers_email_address = '%s'
+    AND customers_guest = 1
 EOSQL
         , $check_mail['customers_email_address']));
 
@@ -146,7 +146,7 @@ EOSQL
             }
 
             if ( (empty($check['newsletter']) || $newsletter == 1) && (empty($check['order_number']) || $orders == $check['order_number']) ) {
-              if ( in_array($GLOBALS['customer']->get('customers_email_address'), $customers) && !empty($_SESSION['shipping']) ) {
+              if ( in_array($customer_id, $customers) && !empty($_SESSION['shipping']) ) {
                 if (!empty($check['products_id']) || !empty($check['categories_id']) || !empty($check['manufacturers_id']) || (int)$check['exclude_specials'] == 1) {
 
                   $products = [];
