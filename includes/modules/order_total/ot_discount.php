@@ -2,7 +2,7 @@
 /*
   $Id$
 
-  Discount Code 5.7.4. Phoenix Pro 1.0.8.6
+  Discount Code 5.8.0. Phoenix Pro 1.0.8.6
   by @raiwa
   info@oscaddons.com
   www.oscaddons.com
@@ -19,7 +19,7 @@
 */
 
   class ot_discount extends abstract_module {
-    var $version = '5.7.4.-1.0.8.6';
+    var $version = '5.8.0.-1.0.8.6';
 
     const CONFIG_KEY_BASE = 'MODULE_ORDER_TOTAL_DISCOUNT_';
 
@@ -46,328 +46,325 @@
       $tax_correction = 0;
       $newsletter = 0;
       $shipping_discount = 'false';
-      $customer_id = $_SESSION['customer_id'] ?? null;
 
       if (isset($_SESSION['sess_discount_code'])) {
-        $check_query = $db->query(sprintf(<<<'EOSQL'
-SELECT count(*) AS total, number_of_use
-  FROM discount_codes
-  WHERE discount_codes = '%s'
-    AND customers_id = '%s'
-  LIMIT 1
-EOSQL
-        , $_SESSION['sess_discount_code'], $GLOBALS['customer']->get('customers_email_address')));
 
-
-        if (mysqli_num_rows($check_query) == 0) {
-          $check['number_of_use'] = 0;
-        } else {
-          $check = $check_query->fetch_assoc();
-        }
-
-        if (($check['number_of_use'] == 0 ? 1 : ($check['total'] < $check['number_of_use'] ? 1 : 0)) == 1) {
-          $check_query = $db->query(sprintf(<<<'EOSQL'
+        $check_query = $db->fetch_all(sprintf(<<<'EOSQL'
 SELECT *
   FROM discount_codes
   WHERE discount_codes = '%s'
     AND IF(expires_date = '0000-00-00', date_format(date_add(now(), interval 1 day), '%%Y-%%m-%%d'), expires_date) >= date_format(now(), '%%Y-%%m-%%d')
-    AND minimum_order_amount <= '%s'
-    AND status = '1'
+    AND status = 1
   LIMIT 1
 EOSQL
-        , $_SESSION['sess_discount_code'], $order->info['subtotal']));
+          , $_SESSION['sess_discount_code']));
 
-          if (mysqli_num_rows($check_query)) {
-            $check = $check_query->fetch_assoc();
-            $order_info = $check['order_info'];
+        if ([] === $check_query) return;
 
-            if (!empty($check['customers_id'])) {
-              $customers = explode(',', $check['customers_id']);
-            } else {
-              $customers = [$customer_id];
-            }
+        $check = $check_query[0];
 
-            if ( isset($customer_id) && !empty($check['newsletter'])) {
-              $check_query_news = $db->query(sprintf(<<<'EOSQL'
+        if ( !isset($_SESSION['customer_id']) && !empty($check['number_of_use']) && $check['number_of_orders'] >= $check['number_of_use']) return;
+        $order_total = (isset($order->info['subtotal'])? $order->info['subtotal'] : $_SESSION['cart']->show_total());
+        if ( !empty($check['minimum_order_amount']) && $order_total < $check['minimum_order_amount']) return;
+
+        if ( isset($_SESSION['customer_id']) ) {
+// logged in customer
+          $customer_id = $_SESSION['customer_id'];
+          $customers = [];
+          if (empty($check['customers_id'])) {
+            if (!empty($check['number_of_use']) && $check['number_of_orders'] >= $check['number_of_use']) return;
+          } else {
+            $customers = explode(',', $check['customers_id']);
+            if ( !in_array($GLOBALS['customer']->get('email_address'), $customers) ) return;
+              $check_customers_query = $db->query(sprintf(<<<'EOSQL'
+SELECT count(*) AS total
+  FROM customers_to_discount_codes
+  WHERE discount_codes_id = '%s'
+    AND customers_id = %s
+  GROUP BY customers_id
+  LIMIT 1
+EOSQL
+              , $check['discount_codes_id'], (int)$customer_id));
+
+            if ( !empty($check['number_of_use']) && (mysqli_num_rows($check_customers_query)) >= $check['number_of_use']) return;
+          }
+
+          if (!empty($check['newsletter'])) {
+            $check_news = $db->fetch_all(sprintf(<<<'EOSQL'
 SELECT customers_newsletter
-  FROM customers
+FROM customers
   WHERE customers_id = %s
 EOSQL
-        , (int)$customer_id));
+              , (int)$customer_id));
 
-              $check_news = $check_query_news->fetch_assoc();
-              $newsletter = $check_news['customers_newsletter'];
-            }
+            if ( $check_news[0]['customers_newsletter'] != 1) return;
+          }
 
-            if (!Text::is_empty($check['order_number'])) {
-            	$check_query_order = $db->query(sprintf(<<<'EOSQL'
+          if (!empty($check['order_number'])) {
+            $check_query_order = $db->query(sprintf(<<<'EOSQL'
 SELECT count(*) AS orders
-  FROM orders
-  WHERE customers_id = %s
+FROM orders
+WHERE customers_id = %s
 EOSQL
-        , (int)$customer_id));
-        
-            	$check_order = $check_query_order->fetch_assoc();
-            	$orders = $check_order['orders']+1;
-            	// Support for PWA guest orders BEGIN
-              $guest_check = $db->query("SHOW COLUMNS FROM orders LIKE 'customers_guest'");
-              $exists = (mysqli_num_rows($guest_check))? true : false;
-              if ($exists) {
-            	  $check_query_mail = $db->query(sprintf(<<<'EOSQL'
+              , (int)$customer_id));
+
+            $check_order = $check_query_order->fetch_assoc();
+            $orders = $check_order['orders']+1;
+            // Support for PWA guest orders BEGIN
+            $guest_check = $db->query("SHOW COLUMNS FROM orders LIKE 'customers_guest'");
+            $exists = (mysqli_num_rows($guest_check))? true : false;
+            if ($exists) {
+              $check_query_mail = $db->query(sprintf(<<<'EOSQL'
 SELECT customers_email_address
-  FROM customers
-  WHERE customers_id = %s
+FROM customers
+WHERE customers_id = %s
 EOSQL
-                , (int)$customer_id));
+              , (int)$customer_id));
 
-            	  $check_mail = $check_query_mail->fetch_assoc();
-            	  if (!empty($check_mail['customers_email_address'])) {
-            	    $check_query_order_guest = $db->query(sprintf(<<<'EOSQL'
+              $check_mail = $check_query_mail->fetch_assoc();
+              if (!empty($check_mail['customers_email_address'])) {
+                $check_query_order_guest = $db->query(sprintf(<<<'EOSQL'
 SELECT count(*) AS orders
-  FROM orders
-  WHERE customers_email_address = '%s'
-    AND customers_guest = 1
+FROM orders
+WHERE customers_email_address = '%s'
+  AND customers_guest = 1
 EOSQL
-        , $check_mail['customers_email_address']));
+                , $check_mail['customers_email_address']));
 
-            	    $check_order_guest = $check_query_order_guest->fetch_assoc();
-            	    $orders = $orders + $check_order_guest['orders'];
-            	  }
-            	}
-            	// Support for PWA guest orders END
-            }
-
-            // check if shipping has tax
-            $module = substr($_SESSION['shipping']['id'], 0, strpos($_SESSION['shipping']['id'], '_'));
-            if (!Text::is_empty($order->info['shipping_method'])) {
-              if ( !empty($GLOBALS[$module]) && $GLOBALS[$module]->tax_class > 0) {
-                $shipping_tax = Tax::get_rate($GLOBALS[$module]->tax_class, $order->delivery['country']['id'], $order->delivery['zone_id']);
+                $check_order_guest = $check_query_order_guest->fetch_assoc();
+                $orders = $orders + $check_order_guest['orders'];
               }
             }
+            // Support for PWA guest orders END
+            if ( $orders != $check['order_number'] ) return;
+          }
 
-            if ( (empty($check['newsletter']) || $newsletter == 1) && (empty($check['order_number']) || $orders == $check['order_number']) ) {
-              if ( in_array($customer_id, $customers) && !empty($_SESSION['shipping']) ) {
-                if (!empty($check['products_id']) || !empty($check['categories_id']) || !empty($check['manufacturers_id']) || (int)$check['exclude_specials'] == 1) {
+        }
 
-                  $products = [];
-                  if (!empty($check['products_id'])) {
-                    $products = explode(',', $check['products_id']);
-                  } elseif (!empty($check['categories_id'])) {
-                    $product_query = $db->query(sprintf(<<<'EOSQL'
+        // check if shipping has tax
+        $module = substr($_SESSION['shipping']['id'], 0, strpos($_SESSION['shipping']['id'], '_'));
+        if (!Text::is_empty($order->info['shipping_method'])) {
+          if ( !empty($GLOBALS[$module]) && $GLOBALS[$module]->tax_class > 0) {
+            $shipping_tax = Tax::get_rate($GLOBALS[$module]->tax_class, $order->delivery['country']['id'], $order->delivery['zone_id']);
+          }
+        }
+
+        if (!empty($check['products_id']) || !empty($check['categories_id']) || !empty($check['manufacturers_id']) || (int)$check['exclude_specials'] == 1) {
+
+          $products = [];
+          if (!empty($check['products_id'])) {
+            $products = explode(',', $check['products_id']);
+          } elseif (!empty($check['categories_id'])) {
+            $product_query = $db->query(sprintf(<<<'EOSQL'
 SELECT products_id
   FROM products_to_categories
   WHERE categories_id IN (%s)%s
 EOSQL
-        , $check['categories_id'], (empty($check['excluded_products_id']) ? '' : ' AND products_id NOT IN (' . $check['excluded_products_id'] . ')')));
+              , $check['categories_id'], (empty($check['excluded_products_id']) ? '' : ' AND products_id NOT IN (' . $check['excluded_products_id'] . ')')));
 
-                    while ($product = $product_query->fetch_assoc()) {
-                      $products[] = $product['products_id'];
-                    }
-                  } elseif (!empty($check['manufacturers_id'])) {
-                    $product_query = $db->query(sprintf(<<<'EOSQL'
+            while ($product = $product_query->fetch_assoc()) {
+              $products[] = $product['products_id'];
+            }
+          } elseif (!empty($check['manufacturers_id'])) {
+            $product_query = $db->query(sprintf(<<<'EOSQL'
 SELECT products_id
   FROM products
   WHERE manufacturers_id IN (%s)%s
 EOSQL
-        , $check['manufacturers_id'], (empty($check['excluded_products_id']) ? '' : ' AND products_id NOT IN (' . $check['excluded_products_id'] . ')')));
+              , $check['manufacturers_id'], (empty($check['excluded_products_id']) ? '' : ' AND products_id NOT IN (' . $check['excluded_products_id'] . ')')));
 
-                    while ($product = $product_query->fetch_assoc()) {
-                      $products[] = $product['products_id'];
-                    }
-                  } elseif ((int)$check['exclude_specials'] == 1) {
-                    for ($i = 0, $n = count($order->products); $i < $n; $i++) {
-                      $products[] = $order->products[$i]['id'];
-                    }
-                  }
+            while ($product = $product_query->fetch_assoc()) {
+              $products[] = $product['products_id'];
+            }
+          } elseif ((int)$check['exclude_specials'] == 1) {
+            for ($i = 0, $n = count($order->products); $i < $n; $i++) {
+              $products[] = $order->products[$i]['id'];
+            }
+          }
 
-                  if ((int)$check['exclude_specials'] == 1) {
-                    $specials = [];
-                    $product_query = $db->query(<<<'EOSQL'
+          if ((int)$check['exclude_specials'] == 1) {
+            $specials = [];
+            $product_query = $db->query(<<<'EOSQL'
 SELECT p.products_id
   FROM products p, specials s
   WHERE p.products_id = s.products_id
   AND s.status = '1'
   AND ifnull(s.expires_date, now()) >= now()
 EOSQL
-                    );
+              );
 
-                    while ($product = $product_query->fetch_assoc()) {
-                      $specials[] = $product['products_id'];
-                    }
-                    if (count($specials) > 0) {
-                      $products = array_diff($products, $specials);
-                    }
-                  }
-
-                  if (empty($check['number_of_products'])) {
-                    $k = PHP_INT_MAX;
-                  } else {
-                    $k = $check['number_of_products'];
-                  }
-
-                  for ($i = 0, $n = count($order->products); $i < $n; $i++) {
-                    if (in_array(Product::build_prid($order->products[$i]['id']), $products)) {
-                      if ($k >= $order->products[$i]['qty']) {
-                        $products_discount = $currencies->format_raw(strpos($check['discount_values'], '%') === false ? $check['discount_values'] * $order->products[$i]['qty'] : Tax::price($order->products[$i]['final_price'], $order->products[$i]['tax']) * str_replace('%', '', $check['discount_values']) / 100 * $order->products[$i]['qty']);
-                        $k -= $order->products[$i]['qty'];
-                      } else {
-                        $products_discount = $currencies->format_raw(strpos($check['discount_values'], '%') === false ? $check['discount_values'] * $k : Tax::price($order->products[$i]['final_price'], $order->products[$i]['tax']) * str_replace('%', '', $check['discount_values']) / 100 * $k);
-                        $k = 0;
-                      }
-
-                      if (!empty($order->products[$i]['tax'])) {
-                        if (DISPLAY_PRICE_WITH_TAX != 'true') {
-                          $tax_correction = $currencies->format_raw(($products_discount * ($order->products[$i]['tax'] / 100)));
-                          $order->info['total'] -= $tax_correction;
-                        } else {
-                          $tax_correction = $currencies->format_raw($products_discount - $products_discount / (1.0 + $order->products[$i]['tax'] / 100));
-                        }
-                      }
-                      $subtotal_correction +=  $order->products[$i]['final_price']; //use for tax calculation only products which have taxes
-                      $order->info['tax'] -= $tax_correction;
-                      $order->info['tax_groups'][$order->products[$i]['tax_description']] -= $tax_correction;
-                      $discount += $products_discount;
-                    }
-                  }
-
-                  // revert currency conversion to default currency
-                  $order->info['total'] -= $currencies->format_raw($discount, true, $order->info['currency'], 1/$order->info['currency_value']);
-
-                  // format discount for output, do not apply currency conversion, product price already converted to order currency
-                  $discount_formatted = $currencies->format($discount, false);
-
-                } elseif (!empty($check['orders_total'])) {
-                  if ($check['orders_total'] == 2) {
-                    $discount = (strpos($check['discount_values'], '%') === false ? $check['discount_values'] : $order->info['subtotal'] * str_replace('%', '', $check['discount_values']) / 100);
-                    if ($discount > $order->info['subtotal']) {
-                      $discount = $order->info['subtotal'];
-                    }
-                    $discount = $currencies->format_raw($discount, false);
-
-                    $order_tax = $order->info['tax'];
-                    if (DISPLAY_PRICE_WITH_TAX == 'true' &&  MODULE_ORDER_TOTAL_DISCOUNT_TAX_CALCULATION_EXCL == 'true' ) {
-                      // find order subtotal excl. tax
-                      $order_subtotal_excl = null;
-                      for ($i = 0, $n = count($order->products); $i < $n; $i++) {
-                        $order_subtotal_excl += $order->products[$i]['qty'] * $order->products[$i]['final_price'];
-                      }
-                      for ($i = 0, $n = count($order->products); $i < $n; $i++) {
-                        if (!empty($order->products[$i]['tax'])) {
-                          $portion = ($order->products[$i]['qty'] * $order->products[$i]['final_price']) / $order_subtotal_excl;
-                          $global_tax_correction = $discount * $portion;
-                          $discount_excl = ($global_tax_correction / (1+$order->products[$i]['tax']/100));
-                          $discount_tax = $global_tax_correction - $discount_excl;
-                          // strip discount from order total
-                          $order->info['total'] -= $currencies->format_raw($global_tax_correction, false);
-                          // correct tax
-                          if (!empty($discount_tax) && is_array($order->info['tax_groups']) && count($order->info['tax_groups']) > 0) {
-                            foreach ($order->info['tax_groups'] as $key => $value) {
-                              if ($key == $order->products[$i]['tax_description']) {
-                               $order->info['tax_groups'][$key] -= $discount_tax;
-                               $order->info['tax'] -= $discount_tax;
-                              }
-                            } // end for each tax group
-                          } // if discount tax and tax groups
-                        } // end if products tax
-                      } // end products loop
-                    } else {
-                      
-                    for ($i = 0, $n = count($order->products); $i < $n; $i++) {
-                      if (!empty($order->products[$i]['tax'])) {
-                        //here it gets complicate, we have to find the proportional part of the global discount for each product
-                        $global_tax_correction = $order->products[$i]['qty']*(( $order->products[$i]['final_price']/$order->info['subtotal'])*$discount)+(($order->products[$i]['qty']* $order->products[$i]['final_price']/$order->info['subtotal'])*$discount) * ($order->products[$i]['tax'] / 100);
-                        $order->info['total'] -= $global_tax_correction;
-                     }
-                    }
-
-                    if (is_array($order->info['tax_groups']) && count($order->info['tax_groups']) > 0) {
-                      foreach ($order->info['tax_groups'] as $key => $value) {
-                        if (!empty($value)) {
-                            $order->info['tax_groups'][$key] = $currencies->format_raw(($order->info['subtotal'] - $discount) * ($value / $order->info['subtotal']), false);
-                          $order_tax += $order->info['tax_groups'][$key];
-                        }
-                      }
-                    }
-                  }
-
-                  if ( !empty($order_tax) ) {
-                    $order->info['tax'] = $order_tax;
-                  } else {
-                    $order->info['total'] -= $discount;
-                  }
-
-                }
-                // format discount for output, do not apply currency conversion
-                $discount_formatted = $currencies->format($discount, true, $order->info['currency'], $order->info['currency_value']);
-
-                } elseif (!empty($check['shipping'])) { //.eof $check['orders_total']
-                  if ($check['shipping'] == 2) {
-                		$discount = $order->info['shipping_cost'] * str_replace('%', '', strtolower($check['discount_values'])) / 100;
-                    if ($discount > $order->info['shipping_cost']) {
-                      $discount = $order->info['shipping_cost'];
-                    }
-                    // calculate shipping tax
-                    $module = substr($GLOBALS['shipping']['id'], 0, strpos($GLOBALS['shipping']['id'], '_'));
-                    if (!Text::is_empty($order->info['shipping_method'])) {
-                      if ($GLOBALS[$module]->tax_class > 0) {
-                        $shipping_tax = Tax::get_rate($GLOBALS[$module]->tax_class, $order->delivery['country']['id'], $order->delivery['zone_id']);
-                      }
-                    }
-                    if (DISPLAY_PRICE_WITH_TAX == 'true' && MODULE_ORDER_TOTAL_DISCOUNT_SORT_ORDER <= MODULE_ORDER_TOTAL_SHIPPING_SORT_ORDER ) $discount += Tax::calculate($discount, $shipping_tax);
-                    $order_tax = 0;
-                    if (is_array($order->info['tax_groups']) && count($order->info['tax_groups']) > 0) {
-                      if ( MODULE_ORDER_TOTAL_DISCOUNT_SORT_ORDER <= MODULE_ORDER_TOTAL_SHIPPING_SORT_ORDER ) { // discount before shipping
-                        foreach ($order->info['tax_groups'] as $key => $value) {
-                          if (!empty($value)) {
-                            if ($shipping_tax > 0) {
-                              $order->info['tax_groups'][$key] = $currencies->format_raw(($order->info['subtotal'] - $discount) * ($value / $order->info['subtotal']));
-                            } else {
-                              $order->info['tax_groups'][$key] = $currencies->format_raw(($order->info['subtotal']) * ($value / $order->info['subtotal']));
-                            }
-                            $order_tax += $order->info['tax_groups'][$key];
-                          }
-                        }
-                      } else { // shipping before discount
-                        foreach ($order->info['tax_groups'] as $key => $value) {
-                          if (!empty($value)) {
-                            if ($shipping_tax > 0) {
-                              $order->info['tax_groups'][$key] = $currencies->format_raw(($order->info['subtotal']) * (($value - Tax::calculate(((DISPLAY_PRICE_WITH_TAX == 'true')? $discount / (1 + $shipping_tax / 100) : $discount ), $shipping_tax)) / $order->info['subtotal']));
-                            } else {
-                              $order->info['tax_groups'][$key] = $currencies->format_raw(($order->info['subtotal']) * ($value / $order->info['subtotal']));
-                            }
-                            $order_tax += $order->info['tax_groups'][$key];
-                          }
-                        }
-                      }
-                    }
-
-                    $order->info['total'] -= $discount;
-                    if (DISPLAY_PRICE_WITH_TAX != 'true') {
-                      $order->info['total'] -= Tax::calculate($discount, $shipping_tax);
-                    }
-                    if (!empty($order_tax)) {
-                      $order->info['tax'] = $order_tax;
-                    }
-                    $shipping_discount = 'true';
-                  }
-
-                  // format discount for output, apply currency conversion
-                  $discount_formatted = $currencies->format($discount, true, $order->info['currency'], $order->info['currency_value']);
-
-                } //.eof $check['shipping']
-                if ( MODULE_ORDER_TOTAL_DISCOUNT_SHOW_SHIPPING_DISCOUNTED == 'true' && $shipping_discount == 'true') {
-                  $order->info['shipping_cost'] -= $discount;
-                }
-
-                if ( MODULE_ORDER_TOTAL_DISCOUNT_SORT_ORDER <= MODULE_ORDER_TOTAL_SUBTOTAL_SORT_ORDER ) { // discount before order subtotal
-                  $order->info['subtotal'] -= $discount;
-                }
-              } // eof check newsletter and order number
+            while ($product = $product_query->fetch_assoc()) {
+              $specials[] = $product['products_id'];
+            }
+            if (count($specials) > 0) {
+              $products = array_diff($products, $specials);
             }
           }
-        }
-      }
 
+          if (empty($check['number_of_products'])) {
+            $k = PHP_INT_MAX;
+          } else {
+            $k = $check['number_of_products'];
+          }
+
+          for ($i = 0, $n = count($order->products); $i < $n; $i++) {
+            if (in_array(Product::build_prid($order->products[$i]['id']), $products)) {
+              if ($k >= $order->products[$i]['qty']) {
+                $products_discount = $currencies->format_raw(strpos($check['discount_values'], '%') === false ? $check['discount_values'] * $order->products[$i]['qty'] : Tax::price($order->products[$i]['final_price'], $order->products[$i]['tax']) * str_replace('%', '', $check['discount_values']) / 100 * $order->products[$i]['qty']);
+                $k -= $order->products[$i]['qty'];
+              } else {
+                $products_discount = $currencies->format_raw(strpos($check['discount_values'], '%') === false ? $check['discount_values'] * $k : Tax::price($order->products[$i]['final_price'], $order->products[$i]['tax']) * str_replace('%', '', $check['discount_values']) / 100 * $k);
+                $k = 0;
+              }
+
+              if (!empty($order->products[$i]['tax'])) {
+                if (DISPLAY_PRICE_WITH_TAX != 'true') {
+                  $tax_correction = $currencies->format_raw(($products_discount * ($order->products[$i]['tax'] / 100)));
+                  $order->info['total'] -= $tax_correction;
+                } else {
+                  $tax_correction = $currencies->format_raw($products_discount - $products_discount / (1.0 + $order->products[$i]['tax'] / 100));
+                }
+              }
+              $subtotal_correction +=  $order->products[$i]['final_price']; //use for tax calculation only products which have taxes
+              $order->info['tax'] -= $tax_correction;
+              $order->info['tax_groups'][$order->products[$i]['tax_description']] -= $tax_correction;
+              $discount += $products_discount;
+            }
+          }
+
+          // revert currency conversion to default currency
+          $order->info['total'] -= $currencies->format_raw($discount, true, $order->info['currency'], 1/$order->info['currency_value']);
+
+          // format discount for output, do not apply currency conversion, product price already converted to order currency
+          $discount_formatted = $currencies->format($discount, false);
+
+        } elseif (!empty($check['orders_total'])) {
+          if ($check['orders_total'] == 2) {
+            $discount = (strpos($check['discount_values'], '%') === false ? $check['discount_values'] : $order->info['subtotal'] * str_replace('%', '', $check['discount_values']) / 100);
+            if ($discount > $order->info['subtotal']) {
+              $discount = $order->info['subtotal'];
+            }
+            $discount = $currencies->format_raw($discount, false);
+
+            $order_tax = $order->info['tax'];
+            if (DISPLAY_PRICE_WITH_TAX == 'true' &&  MODULE_ORDER_TOTAL_DISCOUNT_TAX_CALCULATION_EXCL == 'true' ) {
+              // find order subtotal excl. tax
+              $order_subtotal_excl = null;
+              for ($i = 0, $n = count($order->products); $i < $n; $i++) {
+                $order_subtotal_excl += $order->products[$i]['qty'] * $order->products[$i]['final_price'];
+              }
+              for ($i = 0, $n = count($order->products); $i < $n; $i++) {
+                if (!empty($order->products[$i]['tax'])) {
+                  $portion = ($order->products[$i]['qty'] * $order->products[$i]['final_price']) / $order_subtotal_excl;
+                  $global_tax_correction = $discount * $portion;
+                  $discount_excl = ($global_tax_correction / (1+$order->products[$i]['tax']/100));
+                  $discount_tax = $global_tax_correction - $discount_excl;
+                  // strip discount from order total
+                  $order->info['total'] -= $currencies->format_raw($global_tax_correction, false);
+                  // correct tax
+                  if (!empty($discount_tax) && is_array($order->info['tax_groups']) && count($order->info['tax_groups']) > 0) {
+                    foreach ($order->info['tax_groups'] as $key => $value) {
+                      if ($key == $order->products[$i]['tax_description']) {
+                       $order->info['tax_groups'][$key] -= $discount_tax;
+                       $order->info['tax'] -= $discount_tax;
+                      }
+                    } // end for each tax group
+                  } // if discount tax and tax groups
+                } // end if products tax
+              } // end products loop
+            } else {
+
+            for ($i = 0, $n = count($order->products); $i < $n; $i++) {
+              if (!empty($order->products[$i]['tax'])) {
+                //here it gets complicate, we have to find the proportional part of the global discount for each product
+                $global_tax_correction = $order->products[$i]['qty']*(( $order->products[$i]['final_price']/$order->info['subtotal'])*$discount)+(($order->products[$i]['qty']* $order->products[$i]['final_price']/$order->info['subtotal'])*$discount) * ($order->products[$i]['tax'] / 100);
+                $order->info['total'] -= $global_tax_correction;
+             }
+            }
+
+            if (is_array($order->info['tax_groups']) && count($order->info['tax_groups']) > 0) {
+              foreach ($order->info['tax_groups'] as $key => $value) {
+                if (!empty($value)) {
+                    $order->info['tax_groups'][$key] = $currencies->format_raw(($order->info['subtotal'] - $discount) * ($value / $order->info['subtotal']), false);
+                  $order_tax += $order->info['tax_groups'][$key];
+                }
+              }
+            }
+          }
+
+          if ( !empty($order_tax) ) {
+            $order->info['tax'] = $order_tax;
+          } else {
+            $order->info['total'] -= $discount;
+          }
+
+        }
+        // format discount for output, do not apply currency conversion
+        $discount_formatted = $currencies->format($discount, true, $order->info['currency'], $order->info['currency_value']);
+
+        } elseif (!empty($check['shipping'])) { //.eof $check['orders_total']
+          if ($check['shipping'] == 2) {
+            $discount = $order->info['shipping_cost'] * str_replace('%', '', strtolower($check['discount_values'])) / 100;
+            if ($discount > $order->info['shipping_cost']) {
+              $discount = $order->info['shipping_cost'];
+            }
+            // calculate shipping tax
+            $module = substr($GLOBALS['shipping']['id'], 0, strpos($GLOBALS['shipping']['id'], '_'));
+            if (!Text::is_empty($order->info['shipping_method'])) {
+              if ($GLOBALS[$module]->tax_class > 0) {
+                $shipping_tax = Tax::get_rate($GLOBALS[$module]->tax_class, $order->delivery['country']['id'], $order->delivery['zone_id']);
+              }
+            }
+            if (DISPLAY_PRICE_WITH_TAX == 'true' && MODULE_ORDER_TOTAL_DISCOUNT_SORT_ORDER <= MODULE_ORDER_TOTAL_SHIPPING_SORT_ORDER ) $discount += Tax::calculate($discount, $shipping_tax);
+            $order_tax = 0;
+            if (is_array($order->info['tax_groups']) && count($order->info['tax_groups']) > 0) {
+              if ( MODULE_ORDER_TOTAL_DISCOUNT_SORT_ORDER <= MODULE_ORDER_TOTAL_SHIPPING_SORT_ORDER ) { // discount before shipping
+                foreach ($order->info['tax_groups'] as $key => $value) {
+                  if (!empty($value)) {
+                    if ($shipping_tax > 0) {
+                      $order->info['tax_groups'][$key] = $currencies->format_raw(($order->info['subtotal'] - $discount) * ($value / $order->info['subtotal']));
+                    } else {
+                      $order->info['tax_groups'][$key] = $currencies->format_raw(($order->info['subtotal']) * ($value / $order->info['subtotal']));
+                    }
+                    $order_tax += $order->info['tax_groups'][$key];
+                  }
+                }
+              } else { // shipping before discount
+                foreach ($order->info['tax_groups'] as $key => $value) {
+                  if (!empty($value)) {
+                    if ($shipping_tax > 0) {
+                      $order->info['tax_groups'][$key] = $currencies->format_raw(($order->info['subtotal']) * (($value - Tax::calculate(((DISPLAY_PRICE_WITH_TAX == 'true')? $discount / (1 + $shipping_tax / 100) : $discount ), $shipping_tax)) / $order->info['subtotal']));
+                    } else {
+                      $order->info['tax_groups'][$key] = $currencies->format_raw(($order->info['subtotal']) * ($value / $order->info['subtotal']));
+                    }
+                    $order_tax += $order->info['tax_groups'][$key];
+                  }
+                }
+              }
+            }
+
+            $order->info['total'] -= $discount;
+            if (DISPLAY_PRICE_WITH_TAX != 'true') {
+              $order->info['total'] -= Tax::calculate($discount, $shipping_tax);
+            }
+            if (!empty($order_tax)) {
+              $order->info['tax'] = $order_tax;
+            }
+            $shipping_discount = 'true';
+          }
+
+          // format discount for output, apply currency conversion
+          $discount_formatted = $currencies->format($discount, true, $order->info['currency'], $order->info['currency_value']);
+
+        } //.eof $check['shipping']
+        if ( MODULE_ORDER_TOTAL_DISCOUNT_SHOW_SHIPPING_DISCOUNTED == 'true' && $shipping_discount == 'true') {
+          $order->info['shipping_cost'] -= $discount;
+        }
+
+        if ( MODULE_ORDER_TOTAL_DISCOUNT_SORT_ORDER <= MODULE_ORDER_TOTAL_SUBTOTAL_SORT_ORDER ) { // discount before order subtotal
+          $order->info['subtotal'] -= $discount;
+        }
+      } // eof check newsletter and order number
 
       if (!empty($discount)) {
         $this->output[] = ['title' => (($shipping_discount == 'true')? TEXT_SHIPPING_DISCOUNT : TEXT_DISCOUNT) . (strpos($check['discount_values'], '%') ? ' ' . $check['discount_values'] . ' ' : '') . (!empty($order_info) ? ' (' . $_SESSION['sess_discount_code'] . ')' : '') . ':',
@@ -375,7 +372,6 @@ EOSQL
                            'value' => -$discount];
       }
     }
-
 
     public function get_parameters() {
       return [
@@ -423,6 +419,14 @@ EOSQL
 
       // CREATE NEEDED TABLES INTO DB
       $db->query("
+        CREATE TABLE IF NOT EXISTS customers_to_discount_codes (
+          customers_to_discount_codes_id int(30) NOT NULL auto_increment,
+          customers_id int(11) NOT NULL default '0',
+          discount_codes_id int(11) NOT NULL default '0',
+          PRIMARY KEY (customers_to_discount_codes_id)
+          ) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci AUTO_INCREMENT=1;
+        ");
+      $db->query("
         CREATE TABLE IF NOT EXISTS discount_codes (
           discount_codes_id int(11) NOT NULL auto_increment,
           discount_description VARCHAR(128) NULL,
@@ -443,12 +447,9 @@ EOSQL
           number_of_use int(4) NOT NULL default '0',
           number_of_products int(4) NOT NULL default '0',
           status tinyint(1) NOT NULL default '1',
-          PRIMARY KEY  (discount_codes_id)
-          ) DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci AUTO_INCREMENT=1 ;
+          PRIMARY KEY (discount_codes_id)
+          ) DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci AUTO_INCREMENT=1 ;
         ");
-        
-      // remove obsolete table
-      $db->query("DROP TABLE IF EXISTS customers_to_discount_codes");
 
       // check if new field exist if not create
       $check = $db->query("SHOW COLUMNS FROM discount_codes LIKE 'shipping'");

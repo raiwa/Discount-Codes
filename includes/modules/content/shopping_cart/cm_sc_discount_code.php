@@ -3,7 +3,7 @@
   $Id: cm_sc_discount_code.php
   $Loc: catalog/includes/modules/content/shopping_cart/
 
-  Discount Code 5.7.1 Phoenix 1.0.8.6
+  Discount Code 5.8.0 Phoenix 1.0.8.6
   by @raiwa
   info@oscaddons.com
   www.oscaddons.com
@@ -42,9 +42,9 @@
       global $sess_discount_code;
 
       if ( isset($_SESSION['cart']) && $_SESSION['cart']->count_contents() > 0 ) {
-
         if ( isset($_POST['rem_discount_code']) && $_POST['rem_discount_code'] == 'remove' ) {
           unset($_SESSION['sess_discount_code']);
+          Href::redirect($GLOBALS['Linker']->build());
         }
 
         $tpl_data = [ 'group' => $this->group, 'file' => __FILE__ ];

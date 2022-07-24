@@ -1,6 +1,6 @@
 <?php
 /*
-  Discount Code 5.7.3 Phoenix 1.0.8.6
+  Discount Code 5.8.0 Phoenix 1.0.8.6
   by @raiwa
   info@oscaddons.com
   www.oscaddons.com
@@ -18,7 +18,7 @@
 
 class hook_shop_siteWide_discountCode {
 
-  public $version = '5.7.1-1.0.8.6';
+  public $version = '5.8.0-1.0.8.6';
 
   function listen_injectRedirects() {
 
@@ -69,32 +69,32 @@ function discount_submit(sid){
 $(document).ready(function() {
   var a = 0;
   discount_code_process();
-  $("#discount_code").blur(function() { 
-    if (a == 0) discount_code_process(); a = 0 
+  $("#discount_code").blur(function() {
+    if (a == 0) discount_code_process(); a = 0
   });
-  $("#discount_code").keypress(function(event) { 
-    if (event.which == 13) { 
-    event.preventDefault(); 
-    a = 1; discount_code_process() 
-    } 
+  $("#discount_code").keypress(function(event) {
+    if (event.which == 13) {
+    event.preventDefault();
+    a = 1; discount_code_process()
+    }
   });
-  function discount_code_process() { 
-    if ($("#discount_code").val() != "") { 
-      $("#discount_code").attr("readonly", "readonly"); 
-      $("#discount_code_status").empty().append('<i class="fa fa-cog fa-spin fa-lg">&nbsp;</i>'); 
-      $.post("discount_code.php", { 
-        discount_code: $("#discount_code").val() 
-      }, 
-      function(data) { 
-        if (data == 1) {  
+  function discount_code_process() {
+    if ($("#discount_code").val() != "") {
+      $("#discount_code").attr("readonly", "readonly");
+      $("#discount_code_status").empty().append('<i class="fa fa-cog fa-spin fa-lg">&nbsp;</i>');
+      $.post("discount_code.php", {
+        discount_code: $("#discount_code").val()
+      },
+      function(data) {
+        if (data == 1) {
           $("#discount_code_status").empty().append('<i class="fa fa-check fa-lg" style="color:#00b100;"></i>');
-        } else { 
-          $("#discount_code_status").empty().append('<i class="fa fa-ban fa-lg" style="color:#ff2800;"></i>'); 
+        } else {
+          $("#discount_code_status").empty().append('<i class="fa fa-ban fa-lg" style="color:#ff2800;"></i>');
           $("#discount_code").removeAttr("readonly");
-        }; 
-      }); 
-    } 
-  } 
+        };
+      });
+    }
+  }
 });
 </script>
 eod;
@@ -145,13 +145,20 @@ UPDATE discount_codes
 EOSQL
       , (int)$discount_codes['discount_codes_id']));
 
+      $sql_data = ['customers_id' => (int)$_SESSION['customer_id'],
+                   'discount_codes_id' => (int)$discount_codes['discount_codes_id']
+                   ];
+      $GLOBALS['db']->perform('customers_to_discount_codes ', $sql_data);
+
       unset($_SESSION['sess_discount_code']);
 
     }
   }
 
   function load_lang() {
-    require(language::map_to_translation('hooks/shop/siteWide/discountCode.php'));
+    if (!defined('HOOK_DISCOUNTCODE_TITLE')) {
+      require(language::map_to_translation('hooks/shop/siteWide/discountCode.php'));
+    }
   }
 
 }

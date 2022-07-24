@@ -40,7 +40,7 @@
  const TEXT_DISCOUNT = 'Descuento:';
  const TEXT_DISCOUNT_EXPL = '<small>Se puede introducir una cantidad fija o un porcentaje, por ejemplo: <strong>5</strong> o <strong>10%</strong><br>Los descuentos para gastos de envío sólo se pueden poner en porcentajes. Escribe <strong>100%</strong> para poner envío gratuito.</small>';
  const TEXT_MINIMUM_ORDER_SUB_TOTAL = 'Sub-Total Mínimo del Pedido:';
- const TEXT_NUMBER_OF_USE = 'Usos por cada Código:<br><small>Deje vacío, para uso ilimitado</small>';
+ const TEXT_NUMBER_OF_USE = 'Usos por cada Código:<br><small>Deje vacío, para uso ilimitado. <br>Si se usa junto con clientes, por cliente, de lo contrario, uso total.</small>';
  const TEXT_NUMBER_OF_PRODUCTS = 'Número de productos para aplicar el descuento:<br><small>Para un pedido, deje vacío para uso ilimitado';
  const TEXT_EXPIRY = 'Fecha de Expiración:<br><small>YYYY-MM-DD</small>';
  const TEXT_ORDER_INFO = 'Info del pedido';

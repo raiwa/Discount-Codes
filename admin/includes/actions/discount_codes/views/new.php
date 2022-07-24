@@ -2,7 +2,7 @@
 /*
   $Id$
 
-  Discount Code 5.7.0 Phoenix
+  Discount Code 5.8.0 Phoenix
   by @raiwa
   info@oscaddons.com
   www.oscaddons.com
@@ -212,6 +212,7 @@ EOSQL
       <?php
       $sql = $customer_data->add_order_by($customer_data->build_read(['sortable_name', 'email_address'], 'customers'), ['sortable_name']);
       $customers_query = $db->query($sql);
+      $customers = [];
       while ($customers_values = $customers_query->fetch_assoc()) {
         $customers[] = [
           'id' => $customer_data->get('email_address', $customers_values),
