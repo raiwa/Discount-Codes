@@ -1,15 +1,15 @@
-# Discount Codes 5.7.4. Phoenix Pro 1.0.8.6 (full installation package)
+# Discount Codes 5.8.0. Phoenix Pro 1.0.8.6 (full installation package)
 
-Discount Codes 5.7.4. Addon for Phoenix Cart v1.0.8.6.+
+Discount Codes 5.8.0. Addon for Phoenix Cart v1.0.8.6.+
 by @raiwa
 info@oscaddons.com
 www.oscaddons.com
 
 Compatibility:
 Phoenix 1.0.8.6+
-Tested with Phoenix 1.0.8.15
+Tested with Phoenix 1.0.8.16
 Tested with PayPal standard ipn and Stripe SCA 3.0 version stripe_sca_v1.1.0r1
-PHP 7.0-7.4
+PHP 7.0-8.0
 
 Based on Discount Codes BS 3.x and 4.x by @Tsimi and @raiwa
 Based on the Discount Code for osCommerce 2.3.1 addon by high-quality-php-coding.com 
@@ -31,7 +31,7 @@ includes/modules/order_total/ot_discount.php
 templates/override[YOUR SELECTED TEMPLATE]/includes/hooks/shop/siteWide/discountCode.php
 
 
-*OPTIONAL for the shopping cart Discount Codes Module:
+*OPTIONAL for the shopping cart Discount Codes Module (requires Ship in Cart Addon):
 includes/languages/english/modules/content/shopping_cart/cm_sc_discount_code.php
 includes/modules/content/shopping_cart/templates/tpl_cm_sc_discount_code.php
 includes/modules/content/shopping_cart/cm_sc_discount_code.php
@@ -53,7 +53,7 @@ TO:
 4.1. Install the Order Total module under Administration -> Modules -> Order Total -> Install Module -> Discount Code -> Install Module.
      Set the sort order of the order total modules like in the examples below under point 5
    
-*OPTIONAL if using PayPal Express Checkout and/or Ship in cart add-on
+*OPTIONAL if using Ship in cart add-on (required)
 4.2.   Install the Content module under Administration -> Modules -> Content -> Install Module -> Discount Code[shopping_cart] -> Install Module.
 
 5. Set the sort order for order total modules under Administration -> Modules -> Order Total.
