@@ -1,12 +1,12 @@
-# Discount Codes 5.8.0. Phoenix Pro 1.0.8.6 (full installation package)
+# Discount Codes 5.8.0. Phoenix Pro 1.0.8.18+ (full installation package)
 
-Discount Codes 5.8.0. Addon for Phoenix Cart v1.0.8.6.+
+Discount Codes 5.8.0. Addon for Phoenix Cart v1.0.8.18.+
 by @raiwa
 info@oscaddons.com
 www.oscaddons.com
 
 Compatibility:
-Phoenix 1.0.8.6+
+Phoenix 1.0.8.18+
 Tested with Phoenix 1.0.8.16
 Tested with PayPal standard ipn and Stripe SCA 3.0 version stripe_sca_v1.1.0r1
 PHP 7.0-8.0

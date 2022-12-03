@@ -2,7 +2,7 @@
 /*
   $Id: cm_sc_discount_code.php
 
-  Discount Code 5.5.0. Phoenix
+  Discount Code 5.8.1. Phoenix
   by @raiwa
   info@oscaddons.com
   www.oscaddons.com
@@ -23,7 +23,6 @@
   const MODULE_CONTENT_SC_DISCOUNT_HEADER_TITLE        = 'Discount Code';
   const MODULE_CONTENT_SC_DISCOUNT_TEXT_LOG_IN         = 'Login to redeem your discount code';
   const IMAGE_BUTTON_APPLY                             = 'Apply';
-  const IMAGE_BUTTON_REMOVE                            = 'Remove';
   const IMAGE_BUTTON_LOG_IN                            = 'Login';
 
   const MODULE_CONTENT_SC_DISCOUNT_CODE_OT_WARNING     = '<strong>Discount Code Order Total Module</strong> is not installed. It is required.';

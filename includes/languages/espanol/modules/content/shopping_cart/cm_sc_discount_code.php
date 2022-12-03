@@ -2,7 +2,7 @@
 /*
   $Id: cm_sc_discount_code.php
 
-  Discount Code 5.5.0. Phoenix
+  Discount Code 5.8.1. Phoenix
   by @raiwa
   info@oscaddons.com
   www.oscaddons.com
@@ -23,7 +23,6 @@
   const MODULE_CONTENT_SC_DISCOUNT_HEADER_TITLE        = 'Código de Descuento';
   const MODULE_CONTENT_SC_DISCOUNT_TEXT_LOG_IN         = 'Entre en su cuenta para canjear su Código Descuento';
   const IMAGE_BUTTON_APPLY                             = 'Aplicar';
-  const IMAGE_BUTTON_REMOVE                            = 'Quitar';
   const IMAGE_BUTTON_LOG_IN                            = 'Entrar';
 
   const MODULE_CONTENT_SC_DISCOUNT_CODE_OT_WARNING     = '<strong>El módulo Order Total de Códigos Descuento</strong> no está instalado. Es requerido.';
