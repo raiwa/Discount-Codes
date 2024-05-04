@@ -17,7 +17,7 @@
           echo '<div class="input-group">' . new Input('discount_code', ['value' => ($_SESSION['sess_discount_code'] ?? ''), 'id' => 'discount_code']) . '<span class="form-control-feedback" id="discount_code_status"></span>';
           // show apply button only if ship in cart ot module is present
           echo '<div class="input-group-append">' . 
-                  new Button(IMAGE_BUTTON_APPLY, 'fas fa-sign-in-alt', 'btn-primary', ['id' => 'discount-apply', 'href' => '_', 'onclick' => 'return discount_submit(\'\');']) . 
+                  new Button(IMAGE_BUTTON_APPLY, 'fas fa-sign-in-alt', 'btn-primary discount-apply disabled', ['id' => 'discount-apply', 'href' => '_', 'onclick' => 'return discount_submit(\'\');']) . 
                 '</div>';
           echo '</div>';
         }
@@ -37,10 +37,10 @@
   $Id: cm_sc_discount_code.php
   $Loc: catalog/includes/modules/content/shopping_cart/
 
-  Discount Code 5.8.0 Phoenix
+  Discount Code 5.8.3
   by @raiwa
-  info@oscaddons.com
-  www.oscaddons.com
+  raiwa@phoenixcartaddons.com
+  www.phoenixcartaddons.com
 
   Based on Discount Codes BS 3.x and 4.x by @Tsimi and @raiwa
   Based on the Discount Code for osCommerce 2.3.1 addon by high-quality-php-coding.com

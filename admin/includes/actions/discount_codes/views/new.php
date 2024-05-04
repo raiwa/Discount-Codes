@@ -2,10 +2,10 @@
 /*
   $Id$
 
-  Discount Code 5.8.0 Phoenix
+  Discount Code 5.8.2 Phoenix
   by @raiwa
-  info@oscaddons.com
-  www.oscaddons.com
+  raiwa@phoenixcartaddons.com
+  www.phoenixcartaddons.com
 
   Based on Discount Codes BS 3.x and 4.x by @Tsimi and @raiwa
   Based on the Discount Code for osCommerce 2.3.1 addon by high-quality-php-coding.com
@@ -108,8 +108,8 @@ EOSQL
       </div>
       <div class="form-group row">
         <label for="expires_date" class="col-form-label col-sm-6 text-left text-sm-right pt-0"><?= TEXT_EXPIRY ?></label>
-        <div class="col-sm-6"><?= new Input('expires_date', ['value' => $dInfo->expires_date, 'id' => 'expires_date', 'style' => 'width: 150px;']) ?>
-        </div>
+        <div class="col-sm-6"><?= new Input('expires_date', ['value' => $dInfo->expires_date, 'min' => date('Y-m-d'), 'id' => 'expires_date', 'style' => 'width: 150px;', 'onfocus' => 'this.showPicker?.()'], 'date') ?>
+       </div>
       </div>
     </div>
 

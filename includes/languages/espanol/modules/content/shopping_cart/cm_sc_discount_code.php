@@ -2,10 +2,10 @@
 /*
   $Id: cm_sc_discount_code.php
 
-  Discount Code 5.8.1. Phoenix
+  Discount Code 5.8.3
   by @raiwa
-  info@oscaddons.com
-  www.oscaddons.com
+  raiwa@phoenixcartaddons.com
+  www.phoenixcartaddons.com
 
   Based on Discount Codes BS 3.x and 4.x by @Tsimi and @raiwa
   Based on the Discount Code for osCommerce 2.3.1 addon by high-quality-php-coding.com

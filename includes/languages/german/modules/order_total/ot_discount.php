@@ -2,20 +2,20 @@
 /*
   $Id$
 
-  osCommerce, Open Source E-Commerce Solutions
-  http://www.oscommerce.com
-
-  Copyright (c) 2016 osCommerce
-
-  Released under the GNU General Public License
-
-  Discount Code 5.4.0. BS
+  Discount Code 5.8.3
   by @raiwa
-  info@oscaddons.com
-  www.oscaddons.com
+  raiwa@phoenixcartaddons.com
+  www.phoenixcartaddons.com
 
   Based on Discount Codes BS 3.x and 4.x by @Tsimi and @raiwa
   Based on the Discount Code for osCommerce 2.3.1 addon by high-quality-php-coding.com
+
+  CE Phoenix, E-Commerce made Easy
+  https://phoenixcart.org
+
+  Copyright (c) 2021 Phoenix Cart
+
+  Released under the GNU General Public License
 */
 
  const MODULE_ORDER_TOTAL_DISCOUNT_TITLE               = 'Discount Code';

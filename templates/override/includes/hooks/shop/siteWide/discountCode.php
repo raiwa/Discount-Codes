@@ -1,9 +1,9 @@
 <?php
 /*
-  Discount Code 5.8.0 Phoenix 1.0.8.6
+  Discount Code 5.8.3
   by @raiwa
-  info@oscaddons.com
-  www.oscaddons.com
+  raiwa@phoenixcartaddons.com
+  www.phoenixcartaddons.com
 
   Based on Discount Codes BS 3.x and 4.x by @Tsimi and @raiwa
   Based on the Discount Code for osCommerce 2.3.1 addon by high-quality-php-coding.com
@@ -148,7 +148,7 @@ EOSQL
       $sql_data = ['customers_id' => (int)$_SESSION['customer_id'],
                    'discount_codes_id' => (int)$discount_codes['discount_codes_id']
                    ];
-      $GLOBALS['db']->perform('customers_to_discount_codes ', $sql_data);
+      $GLOBALS['db']->perform('customers_to_discount_codes', $sql_data);
 
       unset($_SESSION['sess_discount_code']);
 

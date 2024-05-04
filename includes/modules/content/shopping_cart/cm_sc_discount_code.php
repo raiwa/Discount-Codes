@@ -3,10 +3,10 @@
   $Id: cm_sc_discount_code.php
   $Loc: catalog/includes/modules/content/shopping_cart/
 
-  Discount Code 5.8.0 Phoenix 1.0.8.6
+  Discount Code 5.8.3
   by @raiwa
-  info@oscaddons.com
-  www.oscaddons.com
+  raiwa@phoenixcartaddons.com
+  www.phoenixcartaddons.com
 
   Based on Discount Codes BS 3.x and 4.x by @Tsimi and @raiwa
   Based on the Discount Code for osCommerce 2.3.1 addon by high-quality-php-coding.com
@@ -81,6 +81,7 @@ $(document).ready(function() {
       function(data) { 
         if (data == 1) {  
           $("#discount_code_status").empty().append('<i class="fa fa-check fa-lg" style="color:#00b100; padding-right:50px;"></i>'); 
+          $(".discount-apply").removeClass("disabled"); 
         } else { 
           $("#discount_code_status").empty().append('<i class="fa fa-ban fa-lg" style="color:#ff2800; padding-right:50px;"></i>');
           $("#discount_code").removeAttr("readonly") 
